@@ -172,13 +172,6 @@ static void BoardInit(void);
 unsigned long Decode(unsigned long* buffer);
 void Display(unsigned long value);
 void MasterMain();
-char ToLetter(unsigned long value);
-char forwardLetter(char letter, unsigned long value);
-void ClearComposingMessage();
-void ClearReceivedMessage();
-void SendMessage();
-void CheckMessage();
-void DisplayMessage();
 void ProcessIR(long lRetVal);
 
 
@@ -1048,89 +1041,6 @@ void SetupCommunication()
     UARTEnable(UARTA0_BASE);
     UARTDMADisable(UARTA1_BASE, (UART_DMA_RX | UART_DMA_TX));
     UARTFIFODisable(UARTA1_BASE) ;
-}
-
-void ClearComposingMessage() {
-    int i;
-    for(i = 0; i < bufferSize; i++) {
-        drawChar(ComposingLetter[i].x, ComposingLetter[i].y, ComposingLetter[i].letter, BLACK, BLACK, 1);
-    }
-    bufferSize = 0;
-    composing_x = 5;
-    composing_y = 68;
-}
-
-void ClearPreviousMessage() {
-    int i;
-    for(i = 0; i < previousSize; i++) {
-        drawChar(PreviousLetter[i].x, PreviousLetter[i].y, PreviousLetter[i].letter, BLACK, BLACK, 1);
-    }
-}
-
-void SendMessage() {
-
-    // if there's something to send
-
-    if(bufferSize > 0) {
-
-        int i;
-        for(i = 0; i < bufferSize; i++) {
-            // wait for UART to be available
-            while(UARTBusy(UARTA1_BASE));
-            UARTCharPut(UARTA1_BASE, ComposingLetter[i].letter);
-        }
-
-        // end line character
-        UARTCharPut(UARTA1_BASE,'\0');
-        ClearComposingMessage();
-    }
-}
-void CheckMessage() {
-
-    // clear UART interrupt
-    UARTIntClear(UARTA1_BASE,UART_INT_RX);
-
-    // when UART is available
-    while(UARTCharsAvail(UARTA1_BASE))
-    {
-        char c = UARTCharGet(UARTA1_BASE);
-
-        if(c == '\0') {
-            messageReady = 1;
-        }
-        else {
-            ReceivedLetter[receiveSize].letter = c;
-            ReceivedLetter[receiveSize].x = received_x;
-            ReceivedLetter[receiveSize].y = received_y;
-            // increase buffer size
-            receiveSize++;
-            // increment pixel position
-            received_x += 7;
-            // position boundaries
-            if(received_x >= 124) {
-                received_x = 5;
-                received_y += 10;
-            }
-        }
-    }
-}
-
-void DisplayMessage() {
-    if(messageReady) {
-        // clear flag
-        messageReady = 0;
-
-        int i;
-        ClearPreviousMessage();
-        for(i = 0; i < receiveSize; i++) {
-            drawChar(ReceivedLetter[i].x, ReceivedLetter[i].y, ReceivedLetter[i].letter, RED, RED, 1);
-            PreviousLetter[i] = ReceivedLetter[i];
-        }
-        previousSize = receiveSize;
-        received_x = 5;
-        received_y = 4;
-        receiveSize = 0;
-    }
 }
 
 void ProcessIR(long lRetVal) {
