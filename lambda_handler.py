@@ -59,6 +59,9 @@ class DigiJam:
         return self.token
 
 class PlayBack(DigiJam):
+    def __init__(self, user_id, token):
+        super().__init__(user_id, token)
+        
     def song_state(self):
 
         query = 'https://api.spotify.com/v1/me/player'
@@ -124,7 +127,6 @@ class PlayBack(DigiJam):
         self.send_request("POST", f"{query}")
 
 class SongFavorites(DigiJam):
-
     def __init__(self, user_id, token, name):
         super().__init__(user_id, token)
         self.name = name
